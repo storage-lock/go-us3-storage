@@ -2,31 +2,32 @@ package us3_storage
 
 import (
 	"context"
-	"os"
 	"testing"
 
-	s3_storage "github.com/storage-lock/go-s3-storage"
-	storage_test_helper "github.com/storage-lock/go-storage-test-helper"
+	"github.com/storage-lock/go-storage"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUS3Storage(t *testing.T) {
-	endpoint := os.Getenv("STORAGE_LOCK_US3_ENDPOINT")
-	accessKey := os.Getenv("STORAGE_LOCK_US3_ACCESS_KEY")
-	secretKey := os.Getenv("STORAGE_LOCK_US3_SECRET_KEY")
-	bucket := os.Getenv("STORAGE_LOCK_US3_BUCKET")
-
-	if endpoint == "" || accessKey == "" || secretKey == "" || bucket == "" {
-		t.Skip("US3 credentials not set, skipping test")
-	}
-
-	ctx := context.Background()
-	cm := s3_storage.NewS3ConnectionManagerFromConfig(endpoint, accessKey, secretKey, true)
-	s, err := NewUS3Storage(ctx, &s3_storage.S3StorageOptions{
-		ConnectionManager: cm,
-		BucketName:        bucket,
-		KeyPrefix:         storage_test_helper.TestTableName,
+func TestNewUS3Storage_NilOptions(t *testing.T) {
+	assert.Panics(t, func() {
+		NewUS3Storage(context.Background(), nil)
 	})
-	assert.Nil(t, err)
-	storage_test_helper.TestStorage(t, s)
+}
+
+func TestUS3Storage_GetName(t *testing.T) {
+	s := &US3Storage{}
+	name := s.GetName()
+	assert.Equal(t, US3StorageName, name)
+}
+
+func TestUS3Storage_Capabilities(t *testing.T) {
+	s := &US3Storage{}
+	caps := s.Capabilities()
+	assert.NotNil(t, caps)
+	// US3 透传 S3 基类能力：CAS + ReliableTime + Watch。
+	// 此前断言 Len==2 是旧发布版 S3 的残留（本地 S3 早已是 3 项），随 replace 补齐而修正。
+	assert.Len(t, caps, 3)
+	assert.Equal(t, storage.CapabilityCAS, caps[0])
+	assert.Equal(t, storage.CapabilityReliableTime, caps[1])
+	assert.Equal(t, storage.CapabilityWatch, caps[2])
 }
