@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/storage-lock/go-s3-storage v0.0.2
-	github.com/storage-lock/go-storage v0.0.3
+	github.com/storage-lock/go-storage v0.1.0
 	github.com/stretchr/testify v1.11.1
 )
 
